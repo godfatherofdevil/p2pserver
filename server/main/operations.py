@@ -61,10 +61,19 @@ def set_addresses(peer_id, peer_type, addresses, game_name):
 
 
 def get_addresses(peer_type, game_name):
+    addresses = []
     if peer_type == PeerTypes.host:
-        return json.loads(get_host_addresses(game_name))
+        addresses = get_host_addresses(game_name)
     elif peer_type == PeerTypes.guest:
-        return json.loads(get_guest_addresses(game_name))
+        addresses = get_guest_addresses(game_name)
+
+    try:
+        addresses = json.loads(addresses)
+    except TypeError:
+        # empty list of some other python type, not json
+        pass
+
+    return addresses
 
 
 def start_a_game_session(session_params: dict):

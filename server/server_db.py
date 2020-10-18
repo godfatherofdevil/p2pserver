@@ -157,7 +157,10 @@ def update_host_addresses(host_id, addresses, game_name):
     db = get_db()
     cursor = db.cursor()
     game_sql = '''select id from games where game_name=?'''
-    game_id = cursor.execute(game_sql, (game_name, )).fetchone()[0]
+    game_id = cursor.execute(game_sql, (game_name, )).fetchone()
+    if not game_id:
+        return []
+    game_id = game_id[0]
     host_sql = ''' replace into addresses (host, host_addresses, game) values (?,?,?)'''
     cursor.execute(host_sql, (host_id, addresses, game_id))
     db.commit()
@@ -168,7 +171,10 @@ def update_guest_addresses(guest_id, addresses, game_name):
     db = get_db()
     cursor = db.cursor()
     game_sql = ''' select id from games where game_name=?'''
-    game_id = cursor.execute(game_sql, (game_name,)).fetchone()[0]
+    game_id = cursor.execute(game_sql, (game_name,)).fetchone()
+    if not game_id:
+        return []
+    game_id = game_id[0]
     guest_sql = ''' replace into addresses (guest, guest_addresses, game) values (?,?,?)'''
     cursor.execute(guest_sql, (guest_id, addresses, game_id))
     db.commit()
@@ -179,7 +185,10 @@ def get_host_addresses(game_name):
     db = get_db()
     cursor = db.cursor()
     game_sql = ''' select id from games where game_name=?'''
-    game_id = cursor.execute(game_sql, (game_name,)).fetchone()[0]
+    game_id = cursor.execute(game_sql, (game_name,)).fetchone()
+    if not game_id:
+        return []
+    game_id = game_id[0]
     host_address_sql = ''' select host_addresses from addresses where game=?'''
     cursor.execute(host_address_sql, (game_id, ))
 
@@ -193,7 +202,10 @@ def get_guest_addresses(game_name):
     db = get_db()
     cursor = db.cursor()
     game_sql = ''' select id from games where game_name=?'''
-    game_id = cursor.execute(game_sql, (game_name,)).fetchone()[0]
+    game_id = cursor.execute(game_sql, (game_name,)).fetchone()
+    if not game_id:
+        return []
+    game_id = game_id[0]
     guest_address_sql = ''' select guest_addresses from addresses where game=?'''
     cursor.execute(guest_address_sql, (game_id, ))
 

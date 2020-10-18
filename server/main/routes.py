@@ -2,7 +2,7 @@ from flask import request, jsonify
 
 
 from server.main import bp
-from server.errors import BadMessage
+from server.errors import BadMessage, OutOfOrderOperation
 from server.main.operations import register_session, list_all_games, delete_one_game, \
     update_one_game, get_game_status, set_addresses, activate_game_status, get_addresses
 from server.const import PeerTypes, GameStatus
@@ -64,6 +64,8 @@ def poll_games():
     peer_id = body.get("peerId")
     addresses = body.get("addresses")
     game_status = get_game_status(game_name=game)
+    if not game_status:
+        raise OutOfOrderOperation(f"poll games: {peer_id} trying to poll before registering!!!")
     set_addresses(peer_id, PeerTypes.host, addresses, game)
     if game_status == GameStatus.active:
         guest_addresses = get_addresses(PeerTypes.guest, game_name=game)
@@ -91,6 +93,8 @@ def start_a_game():
     peer_id = body.get("peerId")
     addresses = body.get("addresses")
     game_status = activate_game_status(game_name=game)
+    if not game_status:
+        raise OutOfOrderOperation(f"{game} does not exist yet. try with different game.")
     set_addresses(peer_id, PeerTypes.guest, addresses, game)
     host_addresses = get_addresses(PeerTypes.host, game_name=game)
 
