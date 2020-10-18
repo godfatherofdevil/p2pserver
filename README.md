@@ -25,6 +25,19 @@ one of the existing game session already registered.
     "addresses": <guest_candidate_addresses>,
     }`
     
+    
+3. _**/games/register**_ - this is meant to be used by host of a game session to register a game   
+`request model:
+    {
+    "name" : <game_name>,
+    "peerId: <peer_id>
+    }`    
+    
+4. _**/games**_ - this endpoint give a guest list of all available game sessions
+this endpoint does not take any payload or query parameters
+
+5. /games/<name_of_game>   - this is meant to be used for maintenance operation 
+such updating name of games, deleting games etc.
  
  ## assumptions:
  hosts have one to many mapping to guests - 

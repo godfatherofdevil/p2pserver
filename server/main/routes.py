@@ -10,6 +10,14 @@ from server.const import PeerTypes, GameStatus
 
 @bp.route("/games/register", methods=["POST", ])
 def register():
+    """
+    request model:
+    {
+    "name" : <game_name>,
+    "peerId: <peer_id>
+    }
+    :return:
+    """
     body = request.json
     if not body:
         raise BadMessage(f"register: body is missing")
@@ -21,6 +29,9 @@ def register():
 
 @bp.route("/games", methods=["GET"])
 def list_games():
+    """
+    :return:
+    """
     all_games = list_all_games()
     return jsonify(all_games), 200
 
