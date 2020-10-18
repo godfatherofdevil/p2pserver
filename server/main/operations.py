@@ -46,11 +46,17 @@ def update_one_game(game_name, new_name):
 
 
 def get_game_status(game_name):
-    return game_status(game_name)
+    status = game_status(game_name)
+    if not status:
+        return None
+    return status[0]
 
 
 def activate_game_status(game_name):
-    set_game_status(game_name, status=GameStatus.active)
+    status = set_game_status(game_name, status=GameStatus.active)
+    if not status:
+        return None
+    return status[0]
 
 
 def set_addresses(peer_id, peer_type, addresses, game_name):
@@ -73,6 +79,7 @@ def get_addresses(peer_type, game_name):
         # empty list of some other python type, not json
         pass
 
+    addresses = list(filter(lambda address: address[0] is not None, addresses))
     return addresses
 
 

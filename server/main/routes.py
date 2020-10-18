@@ -8,13 +8,15 @@ from server.main.operations import register_session, list_all_games, delete_one_
 from server.const import PeerTypes, GameStatus
 
 
-@bp.route("/register", methods=["POST", ])
+@bp.route("/games/register", methods=["POST", ])
 def register():
     body = request.json
     if not body:
         raise BadMessage(f"register: body is missing")
     row = register_session(body)
-    return jsonify({"success": f"registered your game = {row}!!!"}), 200
+    return jsonify(
+        {"success": f"game number = {row}", "game": body.get("name"), "peerId": body.get("peerId")}
+    ), 200
 
 
 @bp.route("/games", methods=["GET"])
@@ -64,7 +66,7 @@ def poll_games():
     peer_id = body.get("peerId")
     addresses = body.get("addresses")
     game_status = get_game_status(game_name=game)
-    if not game_status:
+    if game_status is None:
         raise OutOfOrderOperation(f"poll games: {peer_id} trying to poll before registering!!!")
     set_addresses(peer_id, PeerTypes.host, addresses, game)
     if game_status == GameStatus.active:
@@ -93,7 +95,7 @@ def start_a_game():
     peer_id = body.get("peerId")
     addresses = body.get("addresses")
     game_status = activate_game_status(game_name=game)
-    if not game_status:
+    if game_status is None:
         raise OutOfOrderOperation(f"{game} does not exist yet. try with different game.")
     set_addresses(peer_id, PeerTypes.guest, addresses, game)
     host_addresses = get_addresses(PeerTypes.host, game_name=game)

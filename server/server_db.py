@@ -145,6 +145,7 @@ def set_game_status(game_name: str, status=GameStatus.waiting):
     cursor = db.cursor()
     set_status_sql = ''' update games set status=? where game_name=?'''
     cursor.execute(set_status_sql, (status, game_name,))
+    db.commit()
     status_sql = ''' select status from games where game_name=?'''
     status = cursor.execute(status_sql, (game_name, )).fetchone()
     db.commit()
@@ -208,9 +209,8 @@ def get_guest_addresses(game_name):
     game_id = game_id[0]
     guest_address_sql = ''' select guest_addresses from addresses where game=?'''
     cursor.execute(guest_address_sql, (game_id, ))
-
-    guest_address = cursor.fetchone()
     db.commit()
+    guest_address = cursor.fetchall()
     cursor.close()
     return guest_address
 
