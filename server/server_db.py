@@ -1,6 +1,8 @@
 import sqlite3
 import os
 
+from server.const import GameStatus
+
 
 here = os.path.abspath(os.path.dirname(__file__))
 pr_root_path = os.path.dirname(here)
@@ -19,8 +21,8 @@ def init_db():
         '''
         create table if not exists peers 
         (
-        peer_id text primary key,
-        addresses json
+        id integer primary key autoincrement,
+        peer_id text not null
         )
         '''
     )
@@ -32,14 +34,32 @@ def init_db():
         (
         id integer primary key autoincrement,
         game_name varchar(100),
-        host text,
+        host integer ,
+        status integer default 0,
         foreign key (host) 
-        references peers (peer_id) 
+        references peers (id) 
         on delete cascade 
         )
         '''
     )
 
+    # create table addresses
+    cursor.execute(
+        '''
+        create table if not exists addresses
+        (
+        id integer primary key autoincrement,
+        host varchar(100),
+        guest varchar(100),
+        host_addresses json,
+        guest_addresses json,
+        game integer,
+        foreign key (game) 
+        references games (id) 
+        on delete cascade 
+        )
+        '''
+    )
     connection.close()
 
 
@@ -54,14 +74,14 @@ def get_db():
     return connection
 
 
-def register_game(name, peer_id, addresses):
+def register_game(name, peer_id):
     db = get_db()
     cursor = db.cursor()
 
-    peer = (peer_id, addresses, )
+    peer = (peer_id, )
     game = (name, peer_id)
     peer_sql = ''' 
-    replace into peers (peer_id, addresses) values (?, ?)
+    replace into peers (peer_id) values (?)
     '''
     game_sql = ''' insert into games (game_name, host) values (?, ?)'''
     cursor.execute(peer_sql, peer)
@@ -70,6 +90,24 @@ def register_game(name, peer_id, addresses):
     insert_row = cursor.lastrowid
     cursor.close()
     return insert_row
+
+
+def delete_game(game_name: str):
+    db = get_db()
+    cursor = db.cursor()
+    delete_sql = ''' delete from games where game_name=?'''
+    cursor.execute(delete_sql, (game_name, ))
+    db.commit()
+    cursor.close()
+
+
+def update_game(game_name: str, new_name):
+    db = get_db()
+    cursor = db.cursor()
+    update_sql = '''update games set game_name=? where game_name=?'''
+    cursor.execute(update_sql, (new_name, game_name))
+    db.commit()
+    cursor.close()
 
 
 def get_all_games():
@@ -88,3 +126,79 @@ def get_all_games():
     cursor.close()
 
     return games
+
+
+def game_status(game_name: str):
+    db = get_db()
+    cursor = db.cursor()
+    status_sql = ''' select status from games where game_name=?'''
+    cursor.execute(status_sql, (game_name,))
+    db.commit()
+    status = cursor.fetchone()
+    cursor.close()
+
+    return status
+
+
+def set_game_status(game_name: str, status=GameStatus.waiting):
+    db = get_db()
+    cursor = db.cursor()
+    set_status_sql = ''' update games set status=? where game_name=?'''
+    cursor.execute(set_status_sql, (status, game_name,))
+    status_sql = ''' select status from games where game_name=?'''
+    status = cursor.execute(status_sql, (game_name, )).fetchone()
+    db.commit()
+    cursor.close()
+
+    return status
+
+
+def update_host_addresses(host_id, addresses, game_name):
+    db = get_db()
+    cursor = db.cursor()
+    game_sql = '''select id from games where game_name=?'''
+    game_id = cursor.execute(game_sql, (game_name, )).fetchone()[0]
+    host_sql = ''' replace into addresses (host, host_addresses, game) values (?,?,?)'''
+    cursor.execute(host_sql, (host_id, addresses, game_id))
+    db.commit()
+    cursor.close()
+
+
+def update_guest_addresses(guest_id, addresses, game_name):
+    db = get_db()
+    cursor = db.cursor()
+    game_sql = ''' select id from games where game_name=?'''
+    game_id = cursor.execute(game_sql, (game_name,)).fetchone()[0]
+    guest_sql = ''' replace into addresses (guest, guest_addresses, game) values (?,?,?)'''
+    cursor.execute(guest_sql, (guest_id, addresses, game_id))
+    db.commit()
+    cursor.close()
+
+
+def get_host_addresses(game_name):
+    db = get_db()
+    cursor = db.cursor()
+    game_sql = ''' select id from games where game_name=?'''
+    game_id = cursor.execute(game_sql, (game_name,)).fetchone()[0]
+    host_address_sql = ''' select host_addresses from addresses where game=?'''
+    cursor.execute(host_address_sql, (game_id, ))
+
+    host_address = cursor.fetchone()[0]
+    db.commit()
+    cursor.close()
+    return host_address
+
+
+def get_guest_addresses(game_name):
+    db = get_db()
+    cursor = db.cursor()
+    game_sql = ''' select id from games where game_name=?'''
+    game_id = cursor.execute(game_sql, (game_name,)).fetchone()[0]
+    guest_address_sql = ''' select guest_addresses from addresses where game=?'''
+    cursor.execute(guest_address_sql, (game_id, ))
+
+    guest_address = cursor.fetchone()
+    db.commit()
+    cursor.close()
+    return guest_address
+
