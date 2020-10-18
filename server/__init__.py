@@ -1,9 +1,13 @@
 from flask import Flask
 
+from server.server_db import init_db
+
 
 def create_app(env=None):
     app = Flask("p2pserver")
+    init_db()
     register_blueprints(app)
+
     return app
 
 
